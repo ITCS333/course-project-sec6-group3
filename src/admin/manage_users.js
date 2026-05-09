@@ -1,281 +1,314 @@
-const API_BASE = '../auth/api.php';
+// src/admin/manage_users.js
 
-let currentEditId = null;
+let users = []; // Global users array for sorting/filtering
+let sortDirection = 'asc'; // Track sort direction
 
 /**
- * Check if user is logged in and is admin
+ * Creates a table row for a user
+ * @param {Object} user - User object with id, name, email, is_admin
+ * @returns {HTMLTableRowElement} - Table row element
  */
-async function checkAdminAccess() {
-    try {
-        const response = await fetch(`${API_BASE}?action=check`);
-        if (response.status === 200) {
-            const data = await response.json();
-            if (!data.logged_in) {
-                window.location.href = '../auth/login.html';
-                return false;
-            }
-            if (!data.is_admin) {
-                document.getElementById('users-container').innerHTML =
-                    '<div class="loading" style="color: red;">Access Denied. Admin privileges required.</div>';
-                return false;
-            }
-            return true;
-        }
-    } catch (error) {
-        console.error('Auth check error:', error);
-        window.location.href = '../auth/login.html';
-        return false;
-    }
+function createUserRow(user) {
+    const row = document.createElement('tr');
+
+    // Name cell
+    const nameCell = document.createElement('td');
+    nameCell.textContent = user.name;
+    row.appendChild(nameCell);
+
+    // Email cell
+    const emailCell = document.createElement('td');
+    emailCell.textContent = user.email;
+    row.appendChild(emailCell);
+
+    // Admin status cell
+    const adminCell = document.createElement('td');
+    adminCell.textContent = user.is_admin === 1 ? 'Yes' : 'No';
+    row.appendChild(adminCell);
+
+    // Actions cell with edit and delete buttons
+    const actionsCell = document.createElement('td');
+
+    const editBtn = document.createElement('button');
+    editBtn.textContent = 'Edit';
+    editBtn.className = 'edit-btn';
+    editBtn.setAttribute('data-id', user.id);
+    actionsCell.appendChild(editBtn);
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.textContent = 'Delete';
+    deleteBtn.className = 'delete-btn';
+    deleteBtn.setAttribute('data-id', user.id);
+    actionsCell.appendChild(deleteBtn);
+
+    row.appendChild(actionsCell);
+
+    return row;
 }
 
 /**
- * Load and display all users
+ * Renders all users into the table body
  */
-async function loadUsers() {
-    const container = document.getElementById('users-container');
-    container.innerHTML = '<div class="loading">Loading users...</div>';
+function renderTable() {
+    const tbody = document.getElementById('user-table-body');
+    if (!tbody) return;
 
-    try {
-        const response = await fetch(`${API_BASE}?action=admin_list_users`);
-        const result = await response.json();
+    // Clear the tbody before rendering
+    tbody.innerHTML = '';
 
-        if (result.status === 'success') {
-            displayUsers(result.users);
-        } else {
-            container.innerHTML = `<div class="message error">Error: ${result.message}</div>`;
-        }
-    } catch (error) {
-        console.error('Load users error:', error);
-        container.innerHTML = '<div class="message error">Network error. Please try again.</div>';
-    }
-}
-
-/**
- * Display users in table format
- */
-function displayUsers(users) {
-    const container = document.getElementById('users-container');
-
-    if (!users || users.length === 0) {
-        container.innerHTML = '<div class="loading">No users found.</div>';
-        return;
-    }
-
-    let html = `
-        <table class="users-table">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Role</th>
-                    <th>Created At</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-    `;
-
+    // Render one row per user
     users.forEach(user => {
-        const roleBadge = user.is_admin ?
-            '<span class="badge badge-admin">Admin</span>' :
-            '<span class="badge badge-student">Student</span>';
-
-        html += `
-            <tr>
-                <td>${escapeHtml(String(user.id))}</td>
-                <td>${escapeHtml(user.name)}</td>
-                <td>${escapeHtml(user.email)}</td>
-                <td>${roleBadge}</td>
-                <td>${new Date(user.created_at).toLocaleDateString()}</td>
-                <td>
-                    <button onclick="openEditModal(${user.id})" class="btn btn-edit">Edit</button>
-                    <button onclick="deleteUser(${user.id})" class="btn btn-danger">Delete</button>
-                </td>
-            </tr>
-        `;
+        const row = createUserRow(user);
+        tbody.appendChild(row);
     });
-
-    html += `
-            </tbody>
-        </table>
-    `;
-
-    container.innerHTML = html;
 }
 
 /**
- * Open modal to create new user
+ * Handles password change form submission
+ * @param {Event} event - Submit event
  */
-function openCreateModal() {
-    currentEditId = null;
-    document.getElementById('modalTitle').textContent = 'Add New User';
-    document.getElementById('userId').value = '';
-    document.getElementById('userName').value = '';
-    document.getElementById('userEmail').value = '';
-    document.getElementById('userPassword').value = '';
-    document.getElementById('userPassword').required = true;
-    document.getElementById('userRole').value = '0';
-    document.getElementById('passwordGroup').style.display = 'block';
-    document.getElementById('userModal').style.display = 'flex';
-}
-
-/**
- * Open modal to edit existing user
- */
-async function openEditModal(userId) {
-    try {
-        const response = await fetch(`${API_BASE}?action=admin_list_users`);
-        const result = await response.json();
-
-        if (result.status === 'success') {
-            const user = result.users.find(u => u.id === userId);
-            if (user) {
-                currentEditId = userId;
-                document.getElementById('modalTitle').textContent = 'Edit User';
-                document.getElementById('userId').value = user.id;
-                document.getElementById('userName').value = user.name;
-                document.getElementById('userEmail').value = user.email;
-                document.getElementById('userPassword').value = '';
-                document.getElementById('userPassword').required = false;
-                document.getElementById('userRole').value = user.is_admin ? '1' : '0';
-                document.getElementById('passwordGroup').style.display = 'block';
-                document.getElementById('userModal').style.display = 'flex';
-            }
-        }
-    } catch (error) {
-        console.error('Open edit error:', error);
-        showMessage('Error loading user data', 'error');
-    }
-}
-
-/**
- * Save user (create or update)
- */
-async function saveUser(event) {
+function handleChangePassword(event) {
     event.preventDefault();
 
-    const userId = document.getElementById('userId').value;
-    const name = document.getElementById('userName').value.trim();
-    const email = document.getElementById('userEmail').value.trim();
-    const password = document.getElementById('userPassword').value;
-    const is_admin = parseInt(document.getElementById('userRole').value);
+    const newPassword = document.getElementById('new-password').value;
+    const confirmPassword = document.getElementById('confirm-password').value;
 
-    if (!name || !email) {
-        showMessage('Name and email are required', 'error');
+    // Check if passwords match
+    if (newPassword !== confirmPassword) {
+        alert('New passwords do not match');
         return;
     }
 
-    let action = 'admin_create_user';
-    let body = { name, email, is_admin };
+    // Check password length
+    if (newPassword.length < 8) {
+        alert('Password must be at least 8 characters');
+        return;
+    }
 
-    if (userId) {
-        action = 'admin_update_user';
-        body.id = parseInt(userId);
+    // Clear password fields after successful validation
+    document.getElementById('current-password').value = '';
+    document.getElementById('new-password').value = '';
+    document.getElementById('confirm-password').value = '';
+
+    // Here you would typically send a fetch request to change password
+    alert('Password changed successfully (demo)');
+}
+
+/**
+ * Handles add user form submission
+ * @param {Event} event - Submit event
+ */
+function handleAddUser(event) {
+    event.preventDefault();
+
+    const name = document.getElementById('user-name').value.trim();
+    const email = document.getElementById('user-email').value.trim();
+    const password = document.getElementById('default-password').value;
+    const is_admin = document.getElementById('is-admin').value;
+
+    // Check required fields
+    if (!name || !email || !password) {
+        alert('Please fill in all required fields');
+        return;
+    }
+
+    // Send POST fetch request when inputs are valid
+    fetch('../auth/api.php?action=admin_create_user', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, email, password, is_admin: parseInt(is_admin) })
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.status === 'success') {
+                alert('User added successfully');
+                document.getElementById('add-user-form').reset();
+                loadUsersAndInitialize();
+            } else {
+                alert(result.message || 'Failed to add user');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Network error. Please try again.');
+        });
+}
+
+/**
+ * Handles table button clicks (edit/delete)
+ * @param {Event} event - Click event
+ */
+function handleTableClick(event) {
+    const target = event.target;
+
+    // Handle delete button
+    if (target.classList.contains('delete-btn')) {
+        const userId = target.getAttribute('data-id');
+
+        if (confirm('Are you sure you want to delete this user?')) {
+            // Send DELETE fetch request
+            fetch('../auth/api.php?action=admin_delete_user', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: parseInt(userId) })
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.status === 'success') {
+                        alert('User deleted successfully');
+                        loadUsersAndInitialize();
+                    } else {
+                        alert(result.message || 'Failed to delete user');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Network error. Please try again.');
+                });
+        }
+    }
+
+    // Handle edit button
+    if (target.classList.contains('edit-btn')) {
+        const userId = target.getAttribute('data-id');
+        alert(`Edit user with ID: ${userId} (demo)`);
+    }
+}
+
+/**
+ * Handles search/filtering of users
+ * @param {Event} event - Input event
+ */
+function handleSearch(event) {
+    const searchTerm = event.target.value.toLowerCase();
+    const rows = document.querySelectorAll('#user-table-body tr');
+    let visibleCount = 0;
+
+    rows.forEach(row => {
+        const name = row.cells[0] ? .textContent.toLowerCase() || '';
+        const email = row.cells[1] ? .textContent.toLowerCase() || '';
+
+        if (name.includes(searchTerm) || email.includes(searchTerm)) {
+            row.style.display = '';
+            visibleCount++;
+        } else {
+            row.style.display = 'none';
+        }
+    });
+
+    // Show all rows when search term is cleared
+    if (searchTerm === '') {
+        rows.forEach(row => {
+            row.style.display = '';
+        });
+    }
+}
+
+/**
+ * Handles sorting of users by name
+ */
+function handleSort() {
+    // Sort users by name based on current direction
+    if (sortDirection === 'asc') {
+        users.sort((a, b) => a.name.localeCompare(b.name));
+        sortDirection = 'desc';
     } else {
-        if (!password) {
-            showMessage('Password is required for new users', 'error');
-            return;
-        }
-        body.password = password;
+        users.sort((a, b) => b.name.localeCompare(a.name));
+        sortDirection = 'asc';
     }
 
-    try {
-        const response = await fetch(`${API_BASE}?action=${action}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body)
+    // Re-render the table with sorted users
+    renderTable();
+
+    // Re-attach search functionality to new rows
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+        searchInput.dispatchEvent(new Event('input'));
+    }
+}
+
+/**
+ * Loads users from API and initializes event listeners
+ */
+function loadUsersAndInitialize() {
+    // Fetch users from API
+    fetch('../auth/api.php?action=admin_list_users')
+        .then(response => response.json())
+        .then(result => {
+            if (result.status === 'success') {
+                // Populate the users array from the API response
+                users = result.users;
+                renderTable();
+            } else {
+                console.error('Failed to load users:', result.message);
+            }
+        })
+        .catch(error => {
+            console.error('Fetch error:', error);
         });
-        const result = await response.json();
 
-        if (result.status === 'success') {
-            closeModal();
-            loadUsers();
-            showMessage(result.message, 'success');
-        } else {
-            showMessage(result.message, 'error');
-        }
-    } catch (error) {
-        console.error('Save user error:', error);
-        showMessage('Network error. Please try again.', 'error');
+    // Attach submit listener to password-form
+    const passwordForm = document.getElementById('password-form');
+    if (passwordForm) {
+        // Remove existing listener to avoid duplicates
+        passwordForm.removeEventListener('submit', handleChangePassword);
+        passwordForm.addEventListener('submit', handleChangePassword);
+    }
+
+    // Attach submit listener to add-user-form
+    const addUserForm = document.getElementById('add-user-form');
+    if (addUserForm) {
+        // Remove existing listener to avoid duplicates
+        addUserForm.removeEventListener('submit', handleAddUser);
+        addUserForm.addEventListener('submit', handleAddUser);
+    }
+
+    // Attach click listener for table buttons (event delegation)
+    const userTable = document.getElementById('user-table');
+    if (userTable) {
+        userTable.removeEventListener('click', handleTableClick);
+        userTable.addEventListener('click', handleTableClick);
+    }
+
+    // Attach search input listener
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+        searchInput.removeEventListener('input', handleSearch);
+        searchInput.addEventListener('input', handleSearch);
     }
 }
 
-/**
- * Delete user
- */
-async function deleteUser(userId) {
-    if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
-        return;
-    }
-
-    try {
-        const response = await fetch(`${API_BASE}?action=admin_delete_user`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: userId })
-        });
-        const result = await response.json();
-
-        if (result.status === 'success') {
-            loadUsers();
-            showMessage(result.message, 'success');
-        } else {
-            showMessage(result.message, 'error');
-        }
-    } catch (error) {
-        console.error('Delete user error:', error);
-        showMessage('Network error. Please try again.', 'error');
-    }
+// Initialize when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', loadUsersAndInitialize);
+} else {
+    loadUsersAndInitialize();
 }
 
-/**
- * Close modal
- */
-function closeModal() {
-    document.getElementById('userModal').style.display = 'none';
-    document.getElementById('userForm').reset();
+// Make functions globally available for tests
+if (typeof window !== 'undefined') {
+    window.createUserRow = createUserRow;
+    window.renderTable = renderTable;
+    window.handleChangePassword = handleChangePassword;
+    window.handleAddUser = handleAddUser;
+    window.handleTableClick = handleTableClick;
+    window.handleSearch = handleSearch;
+    window.handleSort = handleSort;
+    window.loadUsersAndInitialize = loadUsersAndInitialize;
+    window.users = users;
 }
 
-/**
- * Show message
- */
-function showMessage(text, type) {
-    const msgDiv = document.getElementById('message');
-    msgDiv.textContent = text;
-    msgDiv.className = `message ${type}`;
-    setTimeout(() => {
-        msgDiv.className = 'message';
-        msgDiv.textContent = '';
-    }, 4000);
+// Export for Node.js environment (tests)
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        createUserRow,
+        renderTable,
+        handleChangePassword,
+        handleAddUser,
+        handleTableClick,
+        handleSearch,
+        handleSort,
+        loadUsersAndInitialize,
+        users
+    };
 }
-
-/**
- * HTML escape helper
- */
-function escapeHtml(str) {
-    if (!str) return '';
-    return str
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-}
-
-// Initialize
-async function init() {
-    const hasAccess = await checkAdminAccess();
-    if (hasAccess) {
-        loadUsers();
-    }
-}
-
-// Attach event listeners
-document.getElementById('userForm').addEventListener('submit', saveUser);
-window.openCreateModal = openCreateModal;
-window.openEditModal = openEditModal;
-window.deleteUser = deleteUser;
-window.closeModal = closeModal;
-
-init();

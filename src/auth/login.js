@@ -1,63 +1,71 @@
 const API_BASE = 'api.php';
 
 /**
- * Checks if user is logged in and updates UI on index.html
+ * Display message in message-container
+ * @param {string} message - The message text to display
+ * @param {string} type - Either 'success' or 'error'
  */
-async function checkAuthStatus() {
-    const authDiv = document.getElementById('auth-content');
-    if (!authDiv) return;
+function displayMessage(message, type) {
+    const container = document.getElementById('message-container');
+    if (!container) return;
 
-    try {
-        const response = await fetch(`${API_BASE}?action=check`);
-        if (response.status === 200) {
-            const data = await response.json();
-            if (data.logged_in) {
-                // User is logged in - show welcome message and logout button
-                authDiv.innerHTML = `
-                    <div class="user-info">
-                        <p>Welcome back, <strong>${escapeHtml(data.username || 'User')}</strong>!</p>
-                        <p>You are logged in as <strong>${data.is_admin ? 'Administrator' : 'Student'}</strong></p>
-                        ${data.is_admin ? '<p>🔧 <a href="src/admin/manage_users.html" style="color:#2a5298;">Manage Users</a></p>' : ''}
-                        <div class="auth-buttons">
-                            <button onclick="logoutUser()" class="btn btn-danger">Logout</button>
-                        </div>
-                    </div>
-                `;
-            } else {
-                // User is not logged in - show login/register buttons
-                authDiv.innerHTML = `
-                    <p>Please log in to access all course features and interact with the community.</p>
-                    <div class="auth-buttons">
-                        <a href="src/auth/login.html" class="btn btn-primary">Login</a>
-                    </div>
-                `;
-            }
-        } else {
-            throw new Error('Failed to check auth status');
+    container.textContent = message;
+    container.className = type;
+
+    setTimeout(() => {
+        if (container.textContent === message) {
+            container.textContent = '';
+            container.className = '';
         }
-    } catch (error) {
-        console.error('Auth check error:', error);
-        authDiv.innerHTML = `
-            <p>Unable to check login status. Please try again later.</p>
-            <div class="auth-buttons">
-                <a href="src/auth/login.html" class="btn btn-primary">Login</a>
-            </div>
-        `;
-    }
+    }, 3000);
 }
 
 /**
- * Handles login form submission on login.html
+ * Validate email format
+ * @param {string} email - Email to validate
+ * @returns {boolean} - True if valid, false otherwise
+ */
+function isValidEmail(email) {
+    if (!email || typeof email !== 'string') return false;
+
+    const atIndex = email.indexOf('@');
+    if (atIndex === -1) return false;
+
+    const domain = email.substring(atIndex + 1);
+    if (domain.indexOf('.') === -1) return false;
+
+    if (atIndex === 0 || domain.length < 3) return false;
+
+    return true;
+}
+
+/**
+ * Validate password length
+ * @param {string} password - Password to validate
+ * @returns {boolean} - True if password length >= 8, false otherwise
+ */
+function isValidPassword(password) {
+    if (!password || typeof password !== 'string') return false;
+    return password.length >= 8;
+}
+
+/**
+ * Handle login form submission
+ * @param {Event} event
  */
 async function handleLogin(event) {
-    if (!event) return;
     event.preventDefault();
 
     const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;
-    const messageDiv = document.getElementById('message');
-    if (!email || !password) {
-        showMessage(messageDiv, 'Please fill in both fields', 'error');
+
+    if (!isValidEmail(email)) {
+        displayMessage('Please enter a valid email address', 'error');
+        return;
+    }
+
+    if (!isValidPassword(password)) {
+        displayMessage('Password must be at least 8 characters long', 'error');
         return;
     }
 
@@ -71,75 +79,41 @@ async function handleLogin(event) {
         const result = await response.json();
 
         if (response.status === 200 && result.status === 'success') {
-            showMessage(messageDiv, 'Login successful! Redirecting...', 'success');
+            displayMessage('Login successful! Redirecting...', 'success');
             setTimeout(() => {
-                window.location.href = '../index.html';
+                window.location.href = '../../index.html';
             }, 1000);
         } else {
-            showMessage(messageDiv, result.message || 'Invalid email or password', 'error');
+            displayMessage(result.message || 'Invalid email or password', 'error');
         }
     } catch (error) {
         console.error('Login error:', error);
-        showMessage(messageDiv, 'Network error. Please try again.', 'error');
+        displayMessage('Network error. Please try again.', 'error');
     }
 }
 
-/**
- * Logs out the current user
- */
-async function logoutUser() {
-    try {
-        const response = await fetch(`${API_BASE}?action=logout`, {
-            method: 'POST'
-        });
-        if (response.status === 200) {
-            window.location.href = '../index.html';
-        } else {
-            console.error('Logout failed');
-            alert('Logout failed. Please try again.');
-        }
-    } catch (error) {
-        console.error('Logout error:', error);
-        alert('Network error during logout.');
-    }
-}
 
-/**
- * Helper function to show messages
- */
-function showMessage(element, text, type) {
-    if (!element) return;
-    element.textContent = text;
-    element.className = `message ${type}`;
-    setTimeout(() => {
-        element.className = 'message';
-        element.textContent = '';
-    }, 3000);
-}
-
-/**
- * HTML escape helper to prevent XSS
- */
-function escapeHtml(str) {
-    if (!str) return '';
-    return str
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-}
-
-// Initialize based on which page we're on
-if (document.getElementById('login-form')) {
-    // We're on login.html
+function setupLoginForm() {
     const form = document.getElementById('login-form');
     if (form) {
         form.addEventListener('submit', handleLogin);
     }
-} else if (document.getElementById('auth-content')) {
-    // We're on index.html
-    checkAuthStatus();
-    // Make logoutUser available globally for onclick
-    window.logoutUser = logoutUser;
+}
+
+if (typeof document !== 'undefined') {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', setupLoginForm);
+    } else {
+        setupLoginForm();
+    }
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        displayMessage,
+        isValidEmail,
+        isValidPassword,
+        handleLogin,
+        setupLoginForm
+    };
 }
