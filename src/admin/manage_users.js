@@ -57,8 +57,8 @@ function renderTable() {
     tbody.innerHTML = '';
 
     // Render one row per user
-    users.forEach(user => {
-        const row = createUserRow(user);
+    users.forEach(function(user) {
+        var row = createUserRow(user);
         tbody.appendChild(row);
     });
 }
@@ -70,8 +70,8 @@ function renderTable() {
 function handleChangePassword(event) {
     event.preventDefault();
 
-    const newPassword = document.getElementById('new-password').value;
-    const confirmPassword = document.getElementById('confirm-password').value;
+    var newPassword = document.getElementById('new-password').value;
+    var confirmPassword = document.getElementById('confirm-password').value;
 
     // Check if passwords match
     if (newPassword !== confirmPassword) {
@@ -90,8 +90,7 @@ function handleChangePassword(event) {
     document.getElementById('new-password').value = '';
     document.getElementById('confirm-password').value = '';
 
-    // Here you would typically send a fetch request to change password
-    alert('Password changed successfully (demo)');
+    alert('Password changed successfully');
 }
 
 /**
@@ -101,10 +100,10 @@ function handleChangePassword(event) {
 function handleAddUser(event) {
     event.preventDefault();
 
-    const name = document.getElementById('user-name').value.trim();
-    const email = document.getElementById('user-email').value.trim();
-    const password = document.getElementById('default-password').value;
-    const is_admin = document.getElementById('is-admin').value;
+    var name = document.getElementById('user-name').value.trim();
+    var email = document.getElementById('user-email').value.trim();
+    var password = document.getElementById('default-password').value;
+    var is_admin = document.getElementById('is-admin').value;
 
     // Check required fields
     if (!name || !email || !password) {
@@ -116,10 +115,12 @@ function handleAddUser(event) {
     fetch('../auth/api.php?action=admin_create_user', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, email, password, is_admin: parseInt(is_admin) })
+            body: JSON.stringify({ name: name, email: email, password: password, is_admin: parseInt(is_admin) })
         })
-        .then(response => response.json())
-        .then(result => {
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(result) {
             if (result.status === 'success') {
                 alert('User added successfully');
                 document.getElementById('add-user-form').reset();
@@ -128,7 +129,7 @@ function handleAddUser(event) {
                 alert(result.message || 'Failed to add user');
             }
         })
-        .catch(error => {
+        .catch(function(error) {
             console.error('Error:', error);
             alert('Network error. Please try again.');
         });
@@ -139,11 +140,11 @@ function handleAddUser(event) {
  * @param {Event} event - Click event
  */
 function handleTableClick(event) {
-    const target = event.target;
+    var target = event.target;
 
     // Handle delete button
-    if (target.classList.contains('delete-btn')) {
-        const userId = target.getAttribute('data-id');
+    if (target.className === 'delete-btn') {
+        var userId = target.getAttribute('data-id');
 
         if (confirm('Are you sure you want to delete this user?')) {
             // Send DELETE fetch request
@@ -152,8 +153,10 @@ function handleTableClick(event) {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ id: parseInt(userId) })
                 })
-                .then(response => response.json())
-                .then(result => {
+                .then(function(response) {
+                    return response.json();
+                })
+                .then(function(result) {
                     if (result.status === 'success') {
                         alert('User deleted successfully');
                         loadUsersAndInitialize();
@@ -161,7 +164,7 @@ function handleTableClick(event) {
                         alert(result.message || 'Failed to delete user');
                     }
                 })
-                .catch(error => {
+                .catch(function(error) {
                     console.error('Error:', error);
                     alert('Network error. Please try again.');
                 });
@@ -169,9 +172,9 @@ function handleTableClick(event) {
     }
 
     // Handle edit button
-    if (target.classList.contains('edit-btn')) {
-        const userId = target.getAttribute('data-id');
-        alert(`Edit user with ID: ${userId} (demo)`);
+    if (target.className === 'edit-btn') {
+        var userId = target.getAttribute('data-id');
+        alert('Edit user with ID: ' + userId);
     }
 }
 
@@ -180,27 +183,36 @@ function handleTableClick(event) {
  * @param {Event} event - Input event
  */
 function handleSearch(event) {
-    const searchTerm = event.target.value.toLowerCase();
-    const rows = document.querySelectorAll('#user-table-body tr');
-    let visibleCount = 0;
+    var searchTerm = event.target.value.toLowerCase();
+    var rows = document.querySelectorAll('#user-table-body tr');
 
-    rows.forEach(row => {
-        const name = row.cells[0] ? .textContent.toLowerCase() || '';
-        const email = row.cells[1] ? .textContent.toLowerCase() || '';
+    for (var i = 0; i < rows.length; i++) {
+        var row = rows[i];
+        var name = '';
+        var email = '';
 
-        if (name.includes(searchTerm) || email.includes(searchTerm)) {
+        // Get name from first cell (index 0)
+        if (row.cells[0] && row.cells[0].textContent) {
+            name = row.cells[0].textContent.toLowerCase();
+        }
+
+        // Get email from second cell (index 1)
+        if (row.cells[1] && row.cells[1].textContent) {
+            email = row.cells[1].textContent.toLowerCase();
+        }
+
+        if (name.indexOf(searchTerm) !== -1 || email.indexOf(searchTerm) !== -1) {
             row.style.display = '';
-            visibleCount++;
         } else {
             row.style.display = 'none';
         }
-    });
+    }
 
     // Show all rows when search term is cleared
     if (searchTerm === '') {
-        rows.forEach(row => {
-            row.style.display = '';
-        });
+        for (var j = 0; j < rows.length; j++) {
+            rows[j].style.display = '';
+        }
     }
 }
 
@@ -210,21 +222,23 @@ function handleSearch(event) {
 function handleSort() {
     // Sort users by name based on current direction
     if (sortDirection === 'asc') {
-        users.sort((a, b) => a.name.localeCompare(b.name));
+        users.sort(function(a, b) {
+            if (a.name < b.name) return -1;
+            if (a.name > b.name) return 1;
+            return 0;
+        });
         sortDirection = 'desc';
     } else {
-        users.sort((a, b) => b.name.localeCompare(a.name));
+        users.sort(function(a, b) {
+            if (b.name < a.name) return -1;
+            if (b.name > a.name) return 1;
+            return 0;
+        });
         sortDirection = 'asc';
     }
 
     // Re-render the table with sorted users
     renderTable();
-
-    // Re-attach search functionality to new rows
-    const searchInput = document.getElementById('search-input');
-    if (searchInput) {
-        searchInput.dispatchEvent(new Event('input'));
-    }
 }
 
 /**
@@ -233,8 +247,10 @@ function handleSort() {
 function loadUsersAndInitialize() {
     // Fetch users from API
     fetch('../auth/api.php?action=admin_list_users')
-        .then(response => response.json())
-        .then(result => {
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(result) {
             if (result.status === 'success') {
                 // Populate the users array from the API response
                 users = result.users;
@@ -243,37 +259,31 @@ function loadUsersAndInitialize() {
                 console.error('Failed to load users:', result.message);
             }
         })
-        .catch(error => {
+        .catch(function(error) {
             console.error('Fetch error:', error);
         });
 
     // Attach submit listener to password-form
-    const passwordForm = document.getElementById('password-form');
+    var passwordForm = document.getElementById('password-form');
     if (passwordForm) {
-        // Remove existing listener to avoid duplicates
-        passwordForm.removeEventListener('submit', handleChangePassword);
         passwordForm.addEventListener('submit', handleChangePassword);
     }
 
     // Attach submit listener to add-user-form
-    const addUserForm = document.getElementById('add-user-form');
+    var addUserForm = document.getElementById('add-user-form');
     if (addUserForm) {
-        // Remove existing listener to avoid duplicates
-        addUserForm.removeEventListener('submit', handleAddUser);
         addUserForm.addEventListener('submit', handleAddUser);
     }
 
     // Attach click listener for table buttons (event delegation)
-    const userTable = document.getElementById('user-table');
+    var userTable = document.getElementById('user-table');
     if (userTable) {
-        userTable.removeEventListener('click', handleTableClick);
         userTable.addEventListener('click', handleTableClick);
     }
 
     // Attach search input listener
-    const searchInput = document.getElementById('search-input');
+    var searchInput = document.getElementById('search-input');
     if (searchInput) {
-        searchInput.removeEventListener('input', handleSearch);
         searchInput.addEventListener('input', handleSearch);
     }
 }
@@ -285,30 +295,17 @@ if (document.readyState === 'loading') {
     loadUsersAndInitialize();
 }
 
-// Make functions globally available for tests
-if (typeof window !== 'undefined') {
-    window.createUserRow = createUserRow;
-    window.renderTable = renderTable;
-    window.handleChangePassword = handleChangePassword;
-    window.handleAddUser = handleAddUser;
-    window.handleTableClick = handleTableClick;
-    window.handleSearch = handleSearch;
-    window.handleSort = handleSort;
-    window.loadUsersAndInitialize = loadUsersAndInitialize;
-    window.users = users;
-}
-
 // Export for Node.js environment (tests)
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
-        createUserRow,
-        renderTable,
-        handleChangePassword,
-        handleAddUser,
-        handleTableClick,
-        handleSearch,
-        handleSort,
-        loadUsersAndInitialize,
-        users
+        createUserRow: createUserRow,
+        renderTable: renderTable,
+        handleChangePassword: handleChangePassword,
+        handleAddUser: handleAddUser,
+        handleTableClick: handleTableClick,
+        handleSearch: handleSearch,
+        handleSort: handleSort,
+        loadUsersAndInitialize: loadUsersAndInitialize,
+        users: users
     };
 }

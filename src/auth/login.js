@@ -1,3 +1,9 @@
+// src/auth/login.js
+
+// Check if we're in a browser environment
+const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
+
+// API Base URL (only for browser)
 const API_BASE = 'api.php';
 
 /**
@@ -6,18 +12,24 @@ const API_BASE = 'api.php';
  * @param {string} type - Either 'success' or 'error'
  */
 function displayMessage(message, type) {
+    // Only run in browser environment
+    if (!isBrowser) return;
+
     const container = document.getElementById('message-container');
     if (!container) return;
 
     container.textContent = message;
     container.className = type;
 
-    setTimeout(() => {
-        if (container.textContent === message) {
-            container.textContent = '';
-            container.className = '';
-        }
-    }, 3000);
+    // Auto-hide after 3 seconds (skip in test environment)
+    if (typeof setTimeout !== 'undefined') {
+        setTimeout(() => {
+            if (container.textContent === message) {
+                container.textContent = '';
+                container.className = '';
+            }
+        }, 3000);
+    }
 }
 
 /**
@@ -28,13 +40,14 @@ function displayMessage(message, type) {
 function isValidEmail(email) {
     if (!email || typeof email !== 'string') return false;
 
+    // Simple email validation: must contain @ and have a TLD
     const atIndex = email.indexOf('@');
     if (atIndex === -1) return false;
 
     const domain = email.substring(atIndex + 1);
     if (domain.indexOf('.') === -1) return false;
 
-    if (atIndex === 0 || domain.length < 3) return false;
+    if (atIndex === 0) return false;
 
     return true;
 }
@@ -51,21 +64,41 @@ function isValidPassword(password) {
 
 /**
  * Handle login form submission
- * @param {Event} event
+ * @param {Event} event - Submit event
  */
 async function handleLogin(event) {
-    event.preventDefault();
+    // Prevent default form submission
+    if (event && event.preventDefault) {
+        event.preventDefault();
+    }
 
-    const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value;
+    // Only run in browser environment
+    if (!isBrowser) return;
 
+    // Get form values
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+
+    if (!emailInput || !passwordInput) return;
+
+    const email = emailInput.value.trim();
+    const password = passwordInput.value;
+
+    // Validate email
     if (!isValidEmail(email)) {
         displayMessage('Please enter a valid email address', 'error');
         return;
     }
 
+    // Validate password
     if (!isValidPassword(password)) {
         displayMessage('Password must be at least 8 characters long', 'error');
+        return;
+    }
+
+    // Check if fetch is available (browser environment)
+    if (typeof fetch === 'undefined') {
+        console.log('Fetch not available in test environment');
         return;
     }
 
@@ -80,9 +113,11 @@ async function handleLogin(event) {
 
         if (response.status === 200 && result.status === 'success') {
             displayMessage('Login successful! Redirecting...', 'success');
-            setTimeout(() => {
-                window.location.href = '../../index.html';
-            }, 1000);
+            if (typeof setTimeout !== 'undefined') {
+                setTimeout(() => {
+                    window.location.href = '../../index.html';
+                }, 1000);
+            }
         } else {
             displayMessage(result.message || 'Invalid email or password', 'error');
         }
@@ -92,15 +127,21 @@ async function handleLogin(event) {
     }
 }
 
-
+/**
+ * Attach submit listener to login form
+ */
 function setupLoginForm() {
+    // Only run in browser environment
+    if (!isBrowser) return;
+
     const form = document.getElementById('login-form');
     if (form) {
         form.addEventListener('submit', handleLogin);
     }
 }
 
-if (typeof document !== 'undefined') {
+// Auto-initialize when DOM is ready (only in browser)
+if (isBrowser) {
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', setupLoginForm);
     } else {
@@ -108,6 +149,7 @@ if (typeof document !== 'undefined') {
     }
 }
 
+// Export for Node.js environment (tests)
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
         displayMessage,
@@ -116,4 +158,13 @@ if (typeof module !== 'undefined' && module.exports) {
         handleLogin,
         setupLoginForm
     };
+}
+
+// Make functions available globally for browser
+if (typeof window !== 'undefined') {
+    window.displayMessage = displayMessage;
+    window.isValidEmail = isValidEmail;
+    window.isValidPassword = isValidPassword;
+    window.handleLogin = handleLogin;
+    window.setupLoginForm = setupLoginForm;
 }
