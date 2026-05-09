@@ -17,14 +17,14 @@ header('Access-Control-Allow-Headers: Content-Type');
 require_once __DIR__ . '/../../includes/db_connect.php';
 
 // Helper function to send JSON response
-function sendResponse($data, $statusCode = 200) {
+function sendJson($data, $statusCode = 200) {
     http_response_code($statusCode);
     echo json_encode($data);
     exit();
 }
 
 function sendError($message, $statusCode = 400) {
-    sendResponse(['status' => 'error', 'message' => $message], $statusCode);
+    sendJson(['status' => 'error', 'message' => $message], $statusCode);
 }
 
 // Check if user is logged in
@@ -32,7 +32,7 @@ if (!isset($_SESSION['user_id'])) {
     sendError('Unauthorized: Please login first', 401);
 }
 
-// Check if user is admin (is_admin = 1)
+// Verify admin status from database
 $stmt = $pdo->prepare("SELECT is_admin FROM users WHERE id = ?");
 $stmt->execute([$_SESSION['user_id']]);
 $user = $stmt->fetch();
@@ -42,11 +42,14 @@ if (!$user || $user['is_admin'] != 1) {
 }
 
 $method = $_SERVER['REQUEST_METHOD'];
+$input = json_decode(file_get_contents('php://input'), true);
 
-// Handle GET requests
+// ============================================
+// GET: List users or get single user
+// ============================================
 if ($method === 'GET') {
     // Get single user by ID
-    if (isset($_GET['id'])) {
+    if (isset($_GET['id']) && is_numeric($_GET['id'])) {
         $id = (int)$_GET['id'];
         $stmt = $pdo->prepare("SELECT id, name, email, is_admin, created_at FROM users WHERE id = ?");
         $stmt->execute([$id]);
@@ -56,7 +59,7 @@ if ($method === 'GET') {
             sendError('User not found', 404);
         }
         
-        sendResponse(['status' => 'success', 'user' => $user]);
+        sendJson(['status' => 'success', 'user' => $user]);
     }
     
     // Get all users (with optional search)
@@ -70,16 +73,13 @@ if ($method === 'GET') {
     }
     
     $users = $stmt->fetchAll();
-    sendResponse(['status' => 'success', 'users' => $users]);
+    sendJson(['status' => 'success', 'users' => $users]);
 }
 
-// Handle POST requests
+// ============================================
+// POST: Create user or Change password
+// ============================================
 if ($method === 'POST') {
-    $input = json_decode(file_get_contents('php://input'), true);
-    if (!$input) {
-        $input = $_POST;
-    }
-    
     // Check if this is a password change request
     if (isset($_GET['action']) && $_GET['action'] === 'change_password') {
         $currentPassword = isset($input['current_password']) ? $input['current_password'] : '';
@@ -103,13 +103,9 @@ if ($method === 'POST') {
         
         $newHash = password_hash($newPassword, PASSWORD_DEFAULT);
         $stmt = $pdo->prepare("UPDATE users SET password = ? WHERE id = ?");
-        $result = $stmt->execute([$newHash, $_SESSION['user_id']]);
+        $stmt->execute([$newHash, $_SESSION['user_id']]);
         
-        if ($result) {
-            sendResponse(['status' => 'success', 'message' => 'Password changed successfully']);
-        } else {
-            sendError('Failed to change password', 500);
-        }
+        sendJson(['status' => 'success', 'message' => 'Password changed successfully']);
     }
     
     // Create new user
@@ -145,32 +141,25 @@ if ($method === 'POST') {
     // Create user
     $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
     $stmt = $pdo->prepare("INSERT INTO users (name, email, password, is_admin) VALUES (?, ?, ?, ?)");
-    $result = $stmt->execute([$name, $email, $hashedPassword, $is_admin]);
+    $stmt->execute([$name, $email, $hashedPassword, $is_admin]);
+    $newId = $pdo->lastInsertId();
     
-    if ($result) {
-        $newId = $pdo->lastInsertId();
-        sendResponse([
-            'status' => 'success',
-            'message' => 'User created successfully',
-            'user' => [
-                'id' => $newId,
-                'name' => $name,
-                'email' => $email,
-                'is_admin' => $is_admin === 1
-            ]
-        ], 201);
-    } else {
-        sendError('Failed to create user', 500);
-    }
+    sendJson([
+        'status' => 'success',
+        'message' => 'User created successfully',
+        'user' => [
+            'id' => $newId,
+            'name' => $name,
+            'email' => $email,
+            'is_admin' => $is_admin === 1
+        ]
+    ], 201);
 }
 
-// Handle PUT requests
+// ============================================
+// PUT: Update user
+// ============================================
 if ($method === 'PUT') {
-    $input = json_decode(file_get_contents('php://input'), true);
-    if (!$input) {
-        parse_str(file_get_contents('php://input'), $input);
-    }
-    
     $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
     
     if ($id <= 0) {
@@ -209,16 +198,14 @@ if ($method === 'PUT') {
     
     // Update user
     $stmt = $pdo->prepare("UPDATE users SET name = ?, email = ?, is_admin = ? WHERE id = ?");
-    $result = $stmt->execute([$name, $email, $is_admin, $id]);
+    $stmt->execute([$name, $email, $is_admin, $id]);
     
-    if ($result) {
-        sendResponse(['status' => 'success', 'message' => 'User updated successfully']);
-    } else {
-        sendError('Failed to update user', 500);
-    }
+    sendJson(['status' => 'success', 'message' => 'User updated successfully']);
 }
 
-// Handle DELETE requests
+// ============================================
+// DELETE: Delete user
+// ============================================
 if ($method === 'DELETE') {
     $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
     
@@ -240,13 +227,9 @@ if ($method === 'DELETE') {
     
     // Delete user
     $stmt = $pdo->prepare("DELETE FROM users WHERE id = ?");
-    $result = $stmt->execute([$id]);
+    $stmt->execute([$id]);
     
-    if ($result) {
-        sendResponse(['status' => 'success', 'message' => 'User deleted successfully']);
-    } else {
-        sendError('Failed to delete user', 500);
-    }
+    sendJson(['status' => 'success', 'message' => 'User deleted successfully']);
 }
 
 // Method not allowed
