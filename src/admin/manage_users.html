@@ -1,150 +1,278 @@
-<!--
-  Requirement: Create a Responsive Admin Portal
-
-  Instructions:
-  Fill in the HTML elements as described in the comments.
-  Use the provided IDs for the elements that require them.
-  Focus on creating a clear and semantic HTML structure.
--->
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <!-- TODO: Add the 'meta' tag for character encoding (UTF-8). -->
-
-    <!-- TODO: Add the responsive 'viewport' meta tag. -->
-
-    <!-- TODO: Add a 'title' for the page, e.g., "Admin Portal". -->
-
-    <!-- TODO: Link to a CSS file or a CSS framework. -->
-
-    <!-- TODO: Add a <script> tag that loads 'manage_users.js' with the 'defer' attribute.
-         Example: <script src="manage_users.js" defer></script> -->
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Users - Admin Panel</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+            padding: 2rem;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        /* Header */
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .header h1 {
+            color: #2a5298;
+        }
+        
+        .btn {
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn-primary {
+            background: #2a5298;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #1e3c72;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        
+        .btn-edit {
+            background: #ffc107;
+            color: #333;
+        }
+        
+        .btn-edit:hover {
+            background: #e0a800;
+        }
+        /* Table */
+        
+        .users-table {
+            width: 100%;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .users-table th,
+        .users-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .users-table th {
+            background: #2a5298;
+            color: white;
+            font-weight: 600;
+        }
+        
+        .users-table tr:hover {
+            background: #f8f9fa;
+        }
+        /* Modal */
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+        }
+        
+        .modal-content h2 {
+            margin-bottom: 1.5rem;
+            color: #2a5298;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 0.6rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        
+        .message {
+            padding: 0.75rem;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+        
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            display: block;
+        }
+        
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+        
+        .badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+        
+        .badge-admin {
+            background: #2a5298;
+            color: white;
+        }
+        
+        .badge-student {
+            background: #28a745;
+            color: white;
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+            .users-table {
+                font-size: 0.85rem;
+            }
+            .users-table th,
+            .users-table td {
+                padding: 0.5rem;
+            }
+            .btn {
+                padding: 0.4rem 0.8rem;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
 </head>
+
 <body>
+    <div class="container">
+        <div class="header">
+            <h1>Manage Users</h1>
+            <div>
+                <button onclick="openCreateModal()" class="btn btn-primary">+ Add New User</button>
+                <a href="../../index.html" class="btn btn-secondary">Back to Home</a>
+            </div>
+        </div>
 
-    <!-- TODO: Create a 'header' element for the top of the page. -->
-        <!-- TODO: Inside the header, add a main heading (e.g., 'h1') with the text "Admin Portal". -->
-    <!-- End of the header. -->
+        <div id="message" class="message"></div>
+        <div id="users-container">
+            <div class="loading">Loading users...</div>
+        </div>
+    </div>
 
-    <!-- TODO: Create a 'main' element to hold the primary content of the portal. -->
+    <!-- Create/Edit User Modal -->
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <h2 id="modalTitle">Add New User</h2>
+            <form id="userForm">
+                <input type="hidden" id="userId">
+                <div class="form-group">
+                    <label for="userName">Full Name</label>
+                    <input type="text" id="userName" required>
+                </div>
+                <div class="form-group">
+                    <label for="userEmail">Email</label>
+                    <input type="email" id="userEmail" required>
+                </div>
+                <div class="form-group" id="passwordGroup">
+                    <label for="userPassword">Password</label>
+                    <input type="password" id="userPassword">
+                    <small style="color:#666;">Leave blank to keep unchanged (for edit)</small>
+                </div>
+                <div class="form-group">
+                    <label for="userRole">Role</label>
+                    <select id="userRole">
+                        <option value="0">Student</option>
+                        <option value="1">Administrator</option>
+                    </select>
+                </div>
+                <div class="modal-buttons">
+                    <button type="submit" class="btn btn-primary">Save</button>
+                    <button type="button" onclick="closeModal()" class="btn btn-secondary">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-        <!-- Section 1: Password Management -->
-        <!-- TODO: Create a 'section' for the password management functionality. -->
-            <!-- TODO: Add a sub-heading (e.g., 'h2') with the text "Change Your Password". -->
-
-            <!-- TODO: Create a 'form' for changing the password.
-                 - action="#"
-                 - id="password-form" -->
-                <!-- TODO: Use a 'fieldset' to group the password-related fields. -->
-                    <!-- TODO: Add a 'legend' for the fieldset, e.g., "Password Update". -->
-
-                    <!-- TODO: Add a 'label' for the current password input. 'for' should be "current-password". -->
-                    <!-- TODO: Add an 'input' for the current password.
-                         - type="password"
-                         - id="current-password"
-                         - required -->
-
-                    <!-- TODO: Add a 'label' for the new password input. 'for' should be "new-password". -->
-                    <!-- TODO: Add an 'input' for the new password.
-                         - type="password"
-                         - id="new-password"
-                         - minlength="8"
-                         - required -->
-
-                    <!-- TODO: Add a 'label' for the confirm password input. 'for' should be "confirm-password". -->
-                    <!-- TODO: Add an 'input' to confirm the new password.
-                         - type="password"
-                         - id="confirm-password"
-                         - required -->
-
-                    <!-- TODO: Add a 'button' to submit the form.
-                         - type="submit"
-                         - id="change"
-                         - Text: "Update Password" -->
-
-                <!-- End of the fieldset. -->
-            <!-- End of the password form. -->
-        <!-- End of the password management section. -->
-
-
-        <!-- Section 2: User Management -->
-        <!-- TODO: Create another 'section' for the user management functionality. -->
-            <!-- TODO: Add a sub-heading (e.g., 'h2') with the text "Manage Users". -->
-
-            <!-- Subsection 2.1: Add New User Form -->
-            <!-- TODO: Create a 'details' element so the "Add User" form can be collapsed. -->
-                <!-- TODO: Add a 'summary' element inside 'details' with the text "Add New User". -->
-
-                <!-- TODO: Create a 'form' for adding a new user.
-                     - action="#"
-                     - id="add-user-form" -->
-                    <!-- TODO: Use a 'fieldset' to group the new user fields. -->
-                        <!-- TODO: Add a 'legend' for the fieldset, e.g., "New User Information". -->
-
-                        <!-- TODO: Add a 'label' and 'input' for the user's full name.
-                             - label 'for': "user-name"
-                             - input 'id': "user-name"
-                             - input 'type': "text"
-                             - input: required -->
-
-                        <!-- TODO: Add a 'label' and 'input' for the user's email.
-                             - label 'for': "user-email"
-                             - input 'id': "user-email"
-                             - input 'type': "email"
-                             - input: required -->
-
-                        <!-- TODO: Add a 'label' and 'input' for the default password.
-                             - label 'for': "default-password"
-                             - input 'id': "default-password"
-                             - input 'type': "password"
-                             - input: required
-                             - minlength="8" -->
-
-                        <!-- TODO: Add a 'label' and 'select' for the admin status.
-                             - label 'for': "is-admin"
-                             - select 'id': "is-admin"
-                             - Add two 'option' elements:
-                               - value="0" text "Student"
-                               - value="1" text "Admin" -->
-
-                        <!-- TODO: Add a 'button' to submit the form.
-                             - type="submit"
-                             - id="add"
-                             - Text: "Add User" -->
-
-                    <!-- End of the fieldset. -->
-                <!-- End of the add user form. -->
-            <!-- End of the 'details' element. -->
-
-
-            <!-- Subsection 2.2: User List -->
-            <!-- TODO: Add a sub-heading (e.g., 'h3') for the list of users, e.g., "Registered Users". -->
-
-            <!-- TODO: Add a search input field.
-                 - type="text"
-                 - id="search-input"
-                 - placeholder e.g. "Search by name or email..." -->
-
-            <!-- TODO: Create a 'table' to display the list of users.
-                 - id="user-table" -->
-                <!-- TODO: Create a 'thead' for the table headers. -->
-                    <!-- TODO: Create a 'tr' (table row) inside the 'thead'. -->
-                        <!-- TODO: Create 'th' (table header) cells for:
-                             "Name", "Email", "Admin", "Actions"
-                             Each 'th' should be clickable for sorting. -->
-                    <!-- End of the row. -->
-                <!-- End of 'thead'. -->
-
-                <!-- TODO: Create a 'tbody' for the table body.
-                     - id="user-table-body"
-                     The rows will be populated dynamically by manage_users.js.
-                     Do NOT add any hardcoded rows here. -->
-            <!-- End of the table. -->
-
-        <!-- End of the user management section. -->
-
-    <!-- End of the main content area. -->
-
+    <script src="manage_users.js"></script>
 </body>
+
 </html>

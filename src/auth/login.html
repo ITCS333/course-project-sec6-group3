@@ -1,93 +1,169 @@
-<!--
-  Requirement: Create a Responsive Login Page
-
-  Instructions:
-  Fill in the HTML elements as described in the comments.
-  Use the provided IDs for the elements that require them.
-  You are encouraged to use a CSS framework for styling, as hinted in the comments,
-  but you can also use your own stylesheet.
--->
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <!-- TODO: Add the 'meta' tag to specify the character encoding for the document to be UTF-8. -->
-
-
-    <!-- TODO: Add the 'meta' tag that makes the page responsive.
-         The 'name' should be 'viewport' and the 'content' should set the 'width' to 'device-width'
-         and the 'initial-scale' to '1.0'. -->
-
-
-    <!-- TODO: Add a 'title' for the page. It should be "Login". -->
-
-
-    <!-- TODO: Link to a CSS file or a CSS framework like PicoCSS or Bootstrap to style the page. You can use a CDN link. -->
-
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - ITCS333 Course Hub</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .login-container {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 450px;
+            margin: 1rem;
+        }
+        
+        .login-container h1 {
+            text-align: center;
+            color: #2a5298;
+            margin-bottom: 0.5rem;
+        }
+        
+        .login-container .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 2rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #2a5298;
+            box-shadow: 0 0 0 3px rgba(42, 82, 152, 0.1);
+        }
+        
+        .btn-login {
+            width: 100%;
+            padding: 0.75rem;
+            background: #2a5298;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .btn-login:hover {
+            background: #1e3c72;
+        }
+        
+        .message {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            border-radius: 8px;
+            text-align: center;
+            display: none;
+        }
+        
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+        
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+        
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 1.5rem;
+            color: #2a5298;
+            text-decoration: none;
+        }
+        
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        
+        .demo-credentials {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: #f0f0f0;
+            border-radius: 8px;
+            font-size: 0.85rem;
+        }
+        
+        .demo-credentials p {
+            margin: 0.25rem 0;
+            color: #555;
+        }
+    </style>
 </head>
-<body <!-- TODO: Add any styling to the 'body' tag to center the login form on the page. -->>
 
-    <!-- This will be the main content area of the page. -->
-    <!-- TODO: Use the 'main' element to contain the login form, as it represents the primary content of the document. -->
+<body>
+    <div class="login-container">
+        <h1>Welcome Back</h1>
+        <p class="subtitle">Sign in to access course materials</p>
 
-        <!-- This 'section' groups the related content of the login form. -->
-        <!-- TODO: Create a 'section' element to act as the login card. -->
+        <form id="login-form">
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" required placeholder="e.g., student@uob.edu.bh">
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required placeholder="Enter your password">
+            </div>
+            <button type="submit" class="btn-login">Login</button>
+        </form>
 
-            <!-- The heading of the login form -->
-            <!-- TODO: Add a heading element (e.g., 'h1' or 'h2') for the form's title. The text should be "Welcome Back!". -->
+        <div id="message" class="message"></div>
 
+        <div class="demo-credentials">
+            <strong>Demo Credentials:</strong>
+            <p>Admin: admin@uob.edu.bh / password</p>
+            <p>Student: 202101234@stu.uob.edu.bh / password</p>
+        </div>
 
-            <!-- The form element will wrap all the inputs. -->
-            <!-- TODO: Create a 'form' element. Give it an 'id' of "login-form". The 'action' can be '#' for now. -->
+        <a href="../index.html" class="back-link">← Back to Home</a>
+    </div>
 
-                <!-- TODO: Use a 'fieldset' to group all the related controls for the login form. -->
-                
-                    <!-- TODO: Add a 'legend' to caption the fieldset. e.g., "Secure Login". This improves accessibility. -->
-
-                    <!-- TODO: Add a 'label' for the email input field.
-                         The 'for' attribute should be "email".
-                         The text should be "Email Address". -->
-
-
-                    <!-- TODO: Add an 'input' field for the email.
-                         - The type should be "email".
-                         - The id must be "email".
-                         - It should be a required field. -->
-
-
-                    <!-- TODO: Add a 'label' for the password input field.
-                         The 'for' attribute should be "password".
-                         The text should be "Password". -->
-
-
-                    <!-- TODO: Add an 'input' field for the password.
-                         - The type should be "password".
-                         - The id must be "password".
-                         - It should be a required field.
-                         - For validation, add a 'minlength' attribute (e.g., minlength="8"). -->
-                
-
-                    <!-- This is the form submission button. -->
-                    <!-- TODO: Add a 'button' to submit the form, inside the fieldset.
-                         - The type should be "submit".
-                         - The id must be "login".
-                         - The text should be "Log In". -->
-                
-                <!-- End of the fieldset. -->
-
-                <!-- TODO: Add a <div> element here with id="message-container".
-                     This will be used by login.js to display success or error messages.
-                     Example: <div id="message-container"></div> -->
-
-            <!-- End of the form element. -->
-
-
-        <!-- End of the login section. -->
-
-    <!-- End of the main content area. -->
-
-    <!-- TODO: Link the login.js script here using a <script> tag with the 'defer' attribute.
-         Example: <script src="login.js" defer></script> -->
-
+    <script src="login.js"></script>
 </body>
+
 </html>

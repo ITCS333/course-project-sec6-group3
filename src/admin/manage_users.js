@@ -1,176 +1,281 @@
-/*
-  Requirement: Add interactivity and data management to the Admin Portal.
+const API_BASE = '../auth/api.php';
 
-  Instructions:
-  1. This file is loaded by the <script src="manage_users.js" defer> tag in manage_users.html.
-     The 'defer' attribute guarantees the DOM is fully parsed before this script runs.
-  2. Implement the JavaScript functionality as described in the TODO comments.
-  3. All data is fetched from and written to the PHP API at '../api/index.php'.
-     The local 'users' array is used only as a client-side cache for search and sort.
-*/
-
-// --- Global Data Store ---
-// This array will be populated with data fetched from the PHP API.
-// It acts as a client-side cache so search and sort work without extra network calls.
-let users = [];
-
-// --- Element Selections ---
-// We can safely select elements here because 'defer' guarantees
-// the HTML document is parsed before this script runs.
-
-// TODO: Select the user table body element with id="user-table-body".
-
-// TODO: Select the "Add User" form with id="add-user-form".
-
-// TODO: Select the "Change Password" form with id="password-form".
-
-// TODO: Select the search input field with id="search-input".
-
-// TODO: Select all table header (th) elements inside the thead of id="user-table".
-
-// --- Functions ---
+let currentEditId = null;
 
 /**
- * TODO: Implement the createUserRow function.
- * This function takes a user object { id, name, email, is_admin } and returns a <tr> element.
- * The <tr> should contain:
- * 1. A <td> for the user's name.
- * 2. A <td> for the user's email.
- * 3. A <td> showing admin status, e.g. "Yes" if is_admin === 1, otherwise "No".
- * 4. A <td> containing two buttons:
- *    - An "Edit" button with class "edit-btn" and a data-id attribute set to the user's id.
- *    - A "Delete" button with class "delete-btn" and a data-id attribute set to the user's id.
+ * Check if user is logged in and is admin
  */
-function createUserRow(user) {
-  // ... your implementation here ...
+async function checkAdminAccess() {
+    try {
+        const response = await fetch(`${API_BASE}?action=check`);
+        if (response.status === 200) {
+            const data = await response.json();
+            if (!data.logged_in) {
+                window.location.href = '../auth/login.html';
+                return false;
+            }
+            if (!data.is_admin) {
+                document.getElementById('users-container').innerHTML =
+                    '<div class="loading" style="color: red;">Access Denied. Admin privileges required.</div>';
+                return false;
+            }
+            return true;
+        }
+    } catch (error) {
+        console.error('Auth check error:', error);
+        window.location.href = '../auth/login.html';
+        return false;
+    }
 }
 
 /**
- * TODO: Implement the renderTable function.
- * This function takes an array of user objects.
- * It should:
- * 1. Clear the current content of the userTableBody.
- * 2. Loop through the provided array of users.
- * 3. For each user, call createUserRow and append the returned <tr> to userTableBody.
+ * Load and display all users
  */
-function renderTable(userArray) {
-  // ... your implementation here ...
+async function loadUsers() {
+    const container = document.getElementById('users-container');
+    container.innerHTML = '<div class="loading">Loading users...</div>';
+
+    try {
+        const response = await fetch(`${API_BASE}?action=admin_list_users`);
+        const result = await response.json();
+
+        if (result.status === 'success') {
+            displayUsers(result.users);
+        } else {
+            container.innerHTML = `<div class="message error">Error: ${result.message}</div>`;
+        }
+    } catch (error) {
+        console.error('Load users error:', error);
+        container.innerHTML = '<div class="message error">Network error. Please try again.</div>';
+    }
 }
 
 /**
- * TODO: Implement the handleChangePassword function.
- * This function is called when the "Update Password" form is submitted.
- * It should:
- * 1. Prevent the form's default submission behaviour.
- * 2. Get the values from "current-password", "new-password", and "confirm-password" inputs.
- * 3. Perform client-side validation:
- *    - If "new-password" and "confirm-password" do not match, show an alert: "Passwords do not match."
- *    - If "new-password" is less than 8 characters, show an alert: "Password must be at least 8 characters."
- * 4. If validation passes, send a POST request to '../api/index.php?action=change_password'
- *    with a JSON body: { id, current_password, new_password }
- *    where 'id' is the currently logged-in admin's user id.
- * 5. On success, show an alert: "Password updated successfully!" and clear all three inputs.
- * 6. On failure, show the error message returned by the API.
+ * Display users in table format
  */
-function handleChangePassword(event) {
-  // ... your implementation here ...
+function displayUsers(users) {
+    const container = document.getElementById('users-container');
+
+    if (!users || users.length === 0) {
+        container.innerHTML = '<div class="loading">No users found.</div>';
+        return;
+    }
+
+    let html = `
+        <table class="users-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Created At</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
+    users.forEach(user => {
+        const roleBadge = user.is_admin ?
+            '<span class="badge badge-admin">Admin</span>' :
+            '<span class="badge badge-student">Student</span>';
+
+        html += `
+            <tr>
+                <td>${escapeHtml(String(user.id))}</td>
+                <td>${escapeHtml(user.name)}</td>
+                <td>${escapeHtml(user.email)}</td>
+                <td>${roleBadge}</td>
+                <td>${new Date(user.created_at).toLocaleDateString()}</td>
+                <td>
+                    <button onclick="openEditModal(${user.id})" class="btn btn-edit">Edit</button>
+                    <button onclick="deleteUser(${user.id})" class="btn btn-danger">Delete</button>
+                </td>
+            </tr>
+        `;
+    });
+
+    html += `
+            </tbody>
+        </table>
+    `;
+
+    container.innerHTML = html;
 }
 
 /**
- * TODO: Implement the handleAddUser function.
- * This function is called when the "Add User" form is submitted.
- * It should:
- * 1. Prevent the form's default submission behaviour.
- * 2. Get the values from "user-name", "user-email", "default-password", and "is-admin".
- * 3. Perform client-side validation:
- *    - If name, email, or password are empty, show an alert: "Please fill out all required fields."
- *    - If password is less than 8 characters, show an alert: "Password must be at least 8 characters."
- * 4. If validation passes, send a POST request to '../api/index.php'
- *    with a JSON body: { name, email, password, is_admin }
- * 5. On success (HTTP 201), re-fetch the full user list by calling loadUsersAndInitialize()
- *    so the table reflects the new record from the database.
- * 6. Clear the form inputs on success.
- * 7. On failure, show the error message returned by the API.
+ * Open modal to create new user
  */
-function handleAddUser(event) {
-  // ... your implementation here ...
+function openCreateModal() {
+    currentEditId = null;
+    document.getElementById('modalTitle').textContent = 'Add New User';
+    document.getElementById('userId').value = '';
+    document.getElementById('userName').value = '';
+    document.getElementById('userEmail').value = '';
+    document.getElementById('userPassword').value = '';
+    document.getElementById('userPassword').required = true;
+    document.getElementById('userRole').value = '0';
+    document.getElementById('passwordGroup').style.display = 'block';
+    document.getElementById('userModal').style.display = 'flex';
 }
 
 /**
- * TODO: Implement the handleTableClick function.
- * This function is an event listener on userTableBody (event delegation).
- * It should:
- * 1. Check if the clicked element has the class "delete-btn".
- * 2. If it is a "delete-btn":
- *    - Get the data-id attribute from the button (this is the user's database id).
- *    - Send a DELETE request to '../api/index.php?id=' + id.
- *    - On success, remove the user from the local 'users' array and call renderTable(users).
- *    - On failure, show the error message returned by the API.
- * 3. If it is an "edit-btn":
- *    - Get the data-id attribute from the button.
- *    - (Optional) Populate an edit form or prompt with the user's current data
- *      and send a PUT request to '../api/index.php' with the updated fields.
+ * Open modal to edit existing user
  */
-function handleTableClick(event) {
-  // ... your implementation here ...
+async function openEditModal(userId) {
+    try {
+        const response = await fetch(`${API_BASE}?action=admin_list_users`);
+        const result = await response.json();
+
+        if (result.status === 'success') {
+            const user = result.users.find(u => u.id === userId);
+            if (user) {
+                currentEditId = userId;
+                document.getElementById('modalTitle').textContent = 'Edit User';
+                document.getElementById('userId').value = user.id;
+                document.getElementById('userName').value = user.name;
+                document.getElementById('userEmail').value = user.email;
+                document.getElementById('userPassword').value = '';
+                document.getElementById('userPassword').required = false;
+                document.getElementById('userRole').value = user.is_admin ? '1' : '0';
+                document.getElementById('passwordGroup').style.display = 'block';
+                document.getElementById('userModal').style.display = 'flex';
+            }
+        }
+    } catch (error) {
+        console.error('Open edit error:', error);
+        showMessage('Error loading user data', 'error');
+    }
 }
 
 /**
- * TODO: Implement the handleSearch function.
- * This function is called on the "input" event of the searchInput.
- * It should:
- * 1. Get the search term from searchInput.value and convert it to lowercase.
- * 2. If the search term is empty, call renderTable(users) to show all users.
- * 3. Otherwise, filter the local 'users' array to find users whose name or email
- *    (converted to lowercase) includes the search term.
- * 4. Call renderTable with the filtered array.
- *    (This filters the client-side cache only; no extra API call is needed.)
+ * Save user (create or update)
  */
-function handleSearch(event) {
-  // ... your implementation here ...
+async function saveUser(event) {
+    event.preventDefault();
+
+    const userId = document.getElementById('userId').value;
+    const name = document.getElementById('userName').value.trim();
+    const email = document.getElementById('userEmail').value.trim();
+    const password = document.getElementById('userPassword').value;
+    const is_admin = parseInt(document.getElementById('userRole').value);
+
+    if (!name || !email) {
+        showMessage('Name and email are required', 'error');
+        return;
+    }
+
+    let action = 'admin_create_user';
+    let body = { name, email, is_admin };
+
+    if (userId) {
+        action = 'admin_update_user';
+        body.id = parseInt(userId);
+    } else {
+        if (!password) {
+            showMessage('Password is required for new users', 'error');
+            return;
+        }
+        body.password = password;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}?action=${action}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+        const result = await response.json();
+
+        if (result.status === 'success') {
+            closeModal();
+            loadUsers();
+            showMessage(result.message, 'success');
+        } else {
+            showMessage(result.message, 'error');
+        }
+    } catch (error) {
+        console.error('Save user error:', error);
+        showMessage('Network error. Please try again.', 'error');
+    }
 }
 
 /**
- * TODO: Implement the handleSort function.
- * This function is called when any <th> in the thead is clicked.
- * It should:
- * 1. Identify which column was clicked using event.currentTarget.cellIndex.
- * 2. Map the cell index to a property name:
- *    - index 0 -> 'name'
- *    - index 1 -> 'email'
- *    - index 2 -> 'is_admin'
- * 3. Toggle sort direction using a data-sort-dir attribute on the <th>
- *    between "asc" and "desc".
- * 4. Sort the local 'users' array in place using array.sort():
- *    - For 'name' and 'email', use localeCompare for string comparison.
- *    - For 'is_admin', compare the values as numbers.
- * 5. Respect the sort direction (ascending or descending).
- * 6. Call renderTable(users) to update the view.
+ * Delete user
  */
-function handleSort(event) {
-  // ... your implementation here ...
+async function deleteUser(userId) {
+    if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}?action=admin_delete_user`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: userId })
+        });
+        const result = await response.json();
+
+        if (result.status === 'success') {
+            loadUsers();
+            showMessage(result.message, 'success');
+        } else {
+            showMessage(result.message, 'error');
+        }
+    } catch (error) {
+        console.error('Delete user error:', error);
+        showMessage('Network error. Please try again.', 'error');
+    }
 }
 
 /**
- * TODO: Implement the loadUsersAndInitialize function.
- * This function must be async.
- * It should:
- * 1. Send a GET request to '../api/index.php' using fetch().
- * 2. Check if the response is ok. If not, log the error and show an alert.
- * 3. Parse the JSON response: await response.json().
- *    The API returns { success: true, data: [ ...users ] }.
- * 4. Assign the data array to the global 'users' variable.
- * 5. Call renderTable(users) to populate the table.
- * 6. Attach all event listeners (only on the first call, or use { once: true } where appropriate):
- *    - "submit" on changePasswordForm  -> handleChangePassword
- *    - "submit" on addUserForm         -> handleAddUser
- *    - "click"  on userTableBody       -> handleTableClick
- *    - "input"  on searchInput         -> handleSearch
- *    - "click"  on each th in tableHeaders -> handleSort
+ * Close modal
  */
-async function loadUsersAndInitialize() {
-  // ... your implementation here ...
+function closeModal() {
+    document.getElementById('userModal').style.display = 'none';
+    document.getElementById('userForm').reset();
 }
 
-// --- Initial Page Load ---
-loadUsersAndInitialize();
+/**
+ * Show message
+ */
+function showMessage(text, type) {
+    const msgDiv = document.getElementById('message');
+    msgDiv.textContent = text;
+    msgDiv.className = `message ${type}`;
+    setTimeout(() => {
+        msgDiv.className = 'message';
+        msgDiv.textContent = '';
+    }, 4000);
+}
+
+/**
+ * HTML escape helper
+ */
+function escapeHtml(str) {
+    if (!str) return '';
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+// Initialize
+async function init() {
+    const hasAccess = await checkAdminAccess();
+    if (hasAccess) {
+        loadUsers();
+    }
+}
+
+// Attach event listeners
+document.getElementById('userForm').addEventListener('submit', saveUser);
+window.openCreateModal = openCreateModal;
+window.openEditModal = openEditModal;
+window.deleteUser = deleteUser;
+window.closeModal = closeModal;
+
+init();
