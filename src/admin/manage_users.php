@@ -2,22 +2,29 @@
 // src/admin/manage_users.php
 // Admin API for user management
 
-session_start();
+// Start session
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Set JSON headers
 header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE');
+header('Access-Control-Allow-Headers: Content-Type');
 
 // Include database connection
 require_once __DIR__ . '/../../includes/db_connect.php';
 
 // Helper function to send JSON response
-function sendJsonResponse($data, $statusCode = 200) {
+function sendResponse($data, $statusCode = 200) {
     http_response_code($statusCode);
     echo json_encode($data);
     exit();
 }
 
-// Helper function to send error response
 function sendError($message, $statusCode = 400) {
-    sendJsonResponse(['status' => 'error', 'message' => $message], $statusCode);
+    sendResponse(['status' => 'error', 'message' => $message], $statusCode);
 }
 
 // Check if user is logged in
@@ -25,21 +32,21 @@ if (!isset($_SESSION['user_id'])) {
     sendError('Unauthorized: Please login first', 401);
 }
 
-// Check if user is admin
-if (!isset($_SESSION['is_admin']) || $_SESSION['is_admin'] !== true) {
+// Check if user is admin (is_admin = 1)
+$stmt = $pdo->prepare("SELECT is_admin FROM users WHERE id = ?");
+$stmt->execute([$_SESSION['user_id']]);
+$user = $stmt->fetch();
+
+if (!$user || $user['is_admin'] != 1) {
     sendError('Forbidden: Admin access required', 403);
 }
 
 $method = $_SERVER['REQUEST_METHOD'];
-$input = json_decode(file_get_contents('php://input'), true);
 
-// Handle GET requests (List users or single user)
+// Handle GET requests
 if ($method === 'GET') {
-    // Check if searching
-    $search = isset($_GET['search']) ? trim($_GET['search']) : '';
-    
-    // Check if getting single user by ID
-    if (isset($_GET['id']) && is_numeric($_GET['id'])) {
+    // Get single user by ID
+    if (isset($_GET['id'])) {
         $id = (int)$_GET['id'];
         $stmt = $pdo->prepare("SELECT id, name, email, is_admin, created_at FROM users WHERE id = ?");
         $stmt->execute([$id]);
@@ -49,10 +56,12 @@ if ($method === 'GET') {
             sendError('User not found', 404);
         }
         
-        sendJsonResponse(['status' => 'success', 'user' => $user]);
+        sendResponse(['status' => 'success', 'user' => $user]);
     }
     
     // Get all users (with optional search)
+    $search = isset($_GET['search']) ? trim($_GET['search']) : '';
+    
     if ($search !== '') {
         $stmt = $pdo->prepare("SELECT id, name, email, is_admin, created_at FROM users WHERE name LIKE ? OR email LIKE ? ORDER BY id");
         $stmt->execute(["%$search%", "%$search%"]);
@@ -61,11 +70,16 @@ if ($method === 'GET') {
     }
     
     $users = $stmt->fetchAll();
-    sendJsonResponse(['status' => 'success', 'users' => $users]);
+    sendResponse(['status' => 'success', 'users' => $users]);
 }
 
-// Handle POST requests (Create user or Change password)
+// Handle POST requests
 if ($method === 'POST') {
+    $input = json_decode(file_get_contents('php://input'), true);
+    if (!$input) {
+        $input = $_POST;
+    }
+    
     // Check if this is a password change request
     if (isset($_GET['action']) && $_GET['action'] === 'change_password') {
         $currentPassword = isset($input['current_password']) ? $input['current_password'] : '';
@@ -89,9 +103,13 @@ if ($method === 'POST') {
         
         $newHash = password_hash($newPassword, PASSWORD_DEFAULT);
         $stmt = $pdo->prepare("UPDATE users SET password = ? WHERE id = ?");
-        $stmt->execute([$newHash, $_SESSION['user_id']]);
+        $result = $stmt->execute([$newHash, $_SESSION['user_id']]);
         
-        sendJsonResponse(['status' => 'success', 'message' => 'Password changed successfully']);
+        if ($result) {
+            sendResponse(['status' => 'success', 'message' => 'Password changed successfully']);
+        } else {
+            sendError('Failed to change password', 500);
+        }
     }
     
     // Create new user
@@ -100,7 +118,7 @@ if ($method === 'POST') {
     $password = isset($input['password']) ? $input['password'] : '';
     $is_admin = isset($input['is_admin']) ? (int)$input['is_admin'] : 0;
     
-    // Validate required fields
+    // Validation
     if (empty($name)) {
         sendError('Name is required', 400);
     }
@@ -109,12 +127,10 @@ if ($method === 'POST') {
         sendError('Email is required', 400);
     }
     
-    // Validate email format
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         sendError('Invalid email format', 400);
     }
     
-    // Validate password length
     if (strlen($password) < 8) {
         sendError('Password must be at least 8 characters', 400);
     }
@@ -129,23 +145,32 @@ if ($method === 'POST') {
     // Create user
     $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
     $stmt = $pdo->prepare("INSERT INTO users (name, email, password, is_admin) VALUES (?, ?, ?, ?)");
-    $stmt->execute([$name, $email, $hashedPassword, $is_admin]);
-    $newId = $pdo->lastInsertId();
+    $result = $stmt->execute([$name, $email, $hashedPassword, $is_admin]);
     
-    sendJsonResponse([
-        'status' => 'success',
-        'message' => 'User created successfully',
-        'user' => [
-            'id' => $newId,
-            'name' => $name,
-            'email' => $email,
-            'is_admin' => $is_admin === 1
-        ]
-    ], 201);
+    if ($result) {
+        $newId = $pdo->lastInsertId();
+        sendResponse([
+            'status' => 'success',
+            'message' => 'User created successfully',
+            'user' => [
+                'id' => $newId,
+                'name' => $name,
+                'email' => $email,
+                'is_admin' => $is_admin === 1
+            ]
+        ], 201);
+    } else {
+        sendError('Failed to create user', 500);
+    }
 }
 
-// Handle PUT requests (Update user)
+// Handle PUT requests
 if ($method === 'PUT') {
+    $input = json_decode(file_get_contents('php://input'), true);
+    if (!$input) {
+        parse_str(file_get_contents('php://input'), $input);
+    }
+    
     $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
     
     if ($id <= 0) {
@@ -184,9 +209,13 @@ if ($method === 'PUT') {
     
     // Update user
     $stmt = $pdo->prepare("UPDATE users SET name = ?, email = ?, is_admin = ? WHERE id = ?");
-    $stmt->execute([$name, $email, $is_admin, $id]);
+    $result = $stmt->execute([$name, $email, $is_admin, $id]);
     
-    sendJsonResponse(['status' => 'success', 'message' => 'User updated successfully']);
+    if ($result) {
+        sendResponse(['status' => 'success', 'message' => 'User updated successfully']);
+    } else {
+        sendError('Failed to update user', 500);
+    }
 }
 
 // Handle DELETE requests
@@ -211,9 +240,13 @@ if ($method === 'DELETE') {
     
     // Delete user
     $stmt = $pdo->prepare("DELETE FROM users WHERE id = ?");
-    $stmt->execute([$id]);
+    $result = $stmt->execute([$id]);
     
-    sendJsonResponse(['status' => 'success', 'message' => 'User deleted successfully']);
+    if ($result) {
+        sendResponse(['status' => 'success', 'message' => 'User deleted successfully']);
+    } else {
+        sendError('Failed to delete user', 500);
+    }
 }
 
 // Method not allowed

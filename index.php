@@ -1,7 +1,7 @@
 <?php
 // index.php - Main authentication API handler
 
-// Start session
+// Start session if not already started
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -9,13 +9,14 @@ if (session_status() === PHP_SESSION_NONE) {
 // Set JSON headers
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
+header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type');
 header('Access-Control-Allow-Credentials: true');
 
 // Handle preflight OPTIONS request
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
+    echo json_encode(['status' => 'success']);
     exit();
 }
 
@@ -34,31 +35,35 @@ function sendError($message, $statusCode = 400) {
     sendJsonResponse(['status' => 'error', 'message' => $message], $statusCode);
 }
 
-// Check if this is a login request
-$requestUri = $_SERVER['REQUEST_URI'];
-$isLoginRequest = (strpos($requestUri, 'action=login') !== false) || 
-                  (strpos($requestUri, '/login') !== false) ||
-                  ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($_GET['action']));
-
-// For non-POST requests (GET, etc.) - only allow check action
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    // Allow check action for GET requests
+// Handle GET requests (check session status)
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    // Check if this is a session check request
     if (isset($_GET['action']) && $_GET['action'] === 'check') {
         sendJsonResponse([
             'status' => 'success',
             'logged_in' => isset($_SESSION['user_id']),
-            'username' => $_SESSION['user_name'] ?? null,
-            'email' => $_SESSION['user_email'] ?? null,
+            'username' => isset($_SESSION['user_name']) ? $_SESSION['user_name'] : null,
+            'email' => isset($_SESSION['user_email']) ? $_SESSION['user_email'] : null,
             'is_admin' => isset($_SESSION['is_admin']) ? (bool)$_SESSION['is_admin'] : false
         ]);
     }
     
-    // For any other non-POST request, return method not allowed
+    // For any other GET request, return method not allowed
+    sendError('Method not allowed. Use POST for login.', 405);
+}
+
+// Only accept POST requests for login
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     sendError('Method not allowed. Use POST for login.', 405);
 }
 
 // Get JSON input
 $input = json_decode(file_get_contents('php://input'), true);
+
+// Check if input is valid JSON
+if ($input === null) {
+    sendError('Invalid JSON payload', 400);
+}
 
 // Extract email and password
 $email = isset($input['email']) ? trim($input['email']) : '';
@@ -95,7 +100,7 @@ try {
         sendError('Invalid email or password', 401);
     }
 
-    // Verify password
+    // Verify password (using password_verify for hashed passwords)
     if (!password_verify($password, $user['password'])) {
         sendError('Invalid email or password', 401);
     }
@@ -105,11 +110,6 @@ try {
     $_SESSION['user_name'] = $user['name'];
     $_SESSION['user_email'] = $user['email'];
     $_SESSION['is_admin'] = (bool)$user['is_admin'];
-
-    // Ensure session cookie is set
-    if (session_status() === PHP_SESSION_ACTIVE) {
-        session_write_close();
-    }
 
     // Return success response without password
     sendJsonResponse([
