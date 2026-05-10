@@ -23,6 +23,19 @@ let currentComments = [];
 
 // --- Element Selections ---
 // TODO: Select all the elements you added IDs for in step 2.
+const resourceTitle = document.querySelector('#resource-title');
+
+const resourceDescription = document.querySelector(
+  '#resource-description'
+);
+
+const resourceLink = document.querySelector('#resource-link');
+
+const commentList = document.querySelector('#comment-list');
+
+const commentForm = document.querySelector('#comment-form');
+
+const newComment = document.querySelector('#new-comment');
 
 // --- Functions ---
 
@@ -34,7 +47,11 @@ let currentComments = [];
  * 3. Return the id value (as a string).
  */
 function getResourceIdFromURL() {
-  // ... your implementation here ...
+  const queryString = window.location.search;
+
+  const params = new URLSearchParams(queryString);
+
+  return params.get('id');
 }
 
 /**
@@ -49,7 +66,11 @@ function getResourceIdFromURL() {
  *    to the resource's link.
  */
 function renderResourceDetails(resource) {
-  // ... your implementation here ...
+  resourceTitle.textContent = resource.title;
+
+  resourceDescription.textContent = resource.description;
+
+  resourceLink.href = resource.link;
 }
 
 /**
@@ -61,7 +82,18 @@ function renderResourceDetails(resource) {
  *   (e.g., "Posted by: Ali Hassan").
  */
 function createCommentArticle(comment) {
-  // ... your implementation here ...
+  const article = document.createElement('article');
+
+  const paragraph = document.createElement('p');
+  paragraph.textContent = comment.text;
+
+  const footer = document.createElement('footer');
+  footer.textContent = `Posted by: ${comment.author}`;
+
+  article.appendChild(paragraph);
+  article.appendChild(footer);
+
+  return article;
 }
 
 /**
@@ -73,7 +105,13 @@ function createCommentArticle(comment) {
  *    append the returned <article> to the comment list container.
  */
 function renderComments() {
-  // ... your implementation here ...
+  commentList.innerHTML = '';
+
+  currentComments.forEach(comment => {
+    const article = createCommentArticle(comment);
+
+    commentList.appendChild(article);
+  });
 }
 
 /**
@@ -98,8 +136,39 @@ function renderComments() {
  * 6. Call `renderComments()` to refresh the comment list.
  * 7. Clear the textarea.
  */
-function handleAddComment(event) {
-  // ... your implementation here ...
+async function handleAddComment(event) {
+  event.preventDefault();
+
+  const commentText = newComment.value.trim();
+
+  if (!commentText) {
+    return;
+  }
+
+  const response = await fetch(
+    './api/index.php?action=comment',
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        resource_id: currentResourceId,
+        author: 'Student',
+        text: commentText
+      })
+    }
+  );
+
+  const result = await response.json();
+
+  if (result.success) {
+    currentComments.push(result.data);
+
+    renderComments();
+
+    newComment.value = '';
+  }
 }
 
 /**
@@ -125,7 +194,46 @@ function handleAddComment(event) {
  * 6. If the resource is not found, display an error in the title element.
  */
 async function initializePage() {
-  // ... your implementation here ...
+
+  currentResourceId = getResourceIdFromURL();
+
+  if (!currentResourceId) {
+    resourceTitle.textContent = 'Resource not found.';
+
+    return;
+  }
+
+  const [
+    resourceResponse,
+    commentsResponse
+  ] = await Promise.all([
+    fetch(`./api/index.php?id=${currentResourceId}`),
+    fetch(
+      `./api/index.php?resource_id=${currentResourceId}&action=comments`
+    )
+  ]);
+
+  const resourceResult = await resourceResponse.json();
+
+  const commentsResult = await commentsResponse.json();
+
+  currentComments = commentsResult.data || [];
+
+  if (resourceResult.success && resourceResult.data) {
+
+    renderResourceDetails(resourceResult.data);
+
+    renderComments();
+
+    commentForm.addEventListener(
+      'submit',
+      handleAddComment
+    );
+
+  } else {
+
+    resourceTitle.textContent = 'Resource not found.';
+  }
 }
 
 // --- Initial Page Load ---
