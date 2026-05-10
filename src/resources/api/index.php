@@ -1,7 +1,7 @@
 <?php
 header("Content-Type: application/json");
 
-// تعديل حسب بيانات قاعدة البيانات عندك
+// --- تعديل حسب قاعدة البيانات عندك ---
 $dsn = "mysql:host=localhost;dbname=your_db_name;charset=utf8mb4";
 $user = "your_db_user";
 $pass = "your_db_password";
@@ -68,4 +68,3 @@ if ($method === "GET") {
 } else {
     echo json_encode(["success" => false, "message" => "Invalid request"]);
 }
-?>
