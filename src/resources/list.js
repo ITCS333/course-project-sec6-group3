@@ -26,7 +26,6 @@ function createResourceArticle(resource, comments=[]) {
   article.appendChild(descEl);
   article.appendChild(linkEl);
 
-  // --- Comments ---
   const commentsContainer = document.createElement('div');
   commentsContainer.classList.add('comments-container');
 
@@ -34,18 +33,15 @@ function createResourceArticle(resource, comments=[]) {
   commentsTitle.textContent = "Comments:";
   commentsContainer.appendChild(commentsTitle);
 
-  comments.forEach(c => {
-    commentsContainer.appendChild(createCommentElement(c));
-  });
+  comments.forEach(c => commentsContainer.appendChild(createCommentElement(c)));
 
-  // --- Add Comment Form ---
   const form = document.createElement('form');
   form.innerHTML = `
     <input type="text" name="author" placeholder="Your Name" required />
     <input type="text" name="text" placeholder="Your Comment" required />
     <button type="submit">Add Comment</button>
   `;
-  form.addEventListener('submit', async (e) => {
+  form.addEventListener('submit', async e => {
     e.preventDefault();
     const author = form.author.value.trim();
     const text = form.text.value.trim();
@@ -61,13 +57,8 @@ function createResourceArticle(resource, comments=[]) {
       if (data.success) {
         commentsContainer.appendChild(createCommentElement({ author, text }));
         form.reset();
-      } else {
-        alert('Failed to add comment');
       }
-    } catch (err) {
-      console.error(err);
-      alert('Error adding comment');
-    }
+    } catch(err) { console.error(err); }
   });
 
   article.appendChild(commentsContainer);
@@ -80,10 +71,7 @@ async function loadResources() {
   try {
     const resResponse = await fetch('./api/index.php');
     const resData = await resResponse.json();
-    if (!resData.success) throw new Error(resData.message || "Failed to load resources.");
-
     resourceListSection.innerHTML = '';
-
     for (const resource of resData.data) {
       const comResponse = await fetch(`./api/index.php?action=comments&resource_id=${resource.id}`);
       const comData = await comResponse.json();
@@ -91,12 +79,7 @@ async function loadResources() {
       const articleEl = createResourceArticle(resource, comments);
       resourceListSection.appendChild(articleEl);
     }
-
-  } catch (error) {
-    console.error(error);
-    resourceListSection.innerHTML = `<p class="error">Unable to load resources. Please try again later.</p>`;
-  }
+  } catch(err) { console.error(err); }
 }
 
-// Load on page
 loadResources();
