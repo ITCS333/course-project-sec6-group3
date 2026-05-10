@@ -1,298 +1,215 @@
+<!--
+  Requirement: Create a Responsive Admin Portal
+
+  Instructions:
+  Fill in the HTML elements as described in the comments.
+  Use the provided IDs for the elements that require them.
+  Focus on creating a clear and semantic HTML structure.
+-->
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Users - Admin Panel</title>
+    <!-- TODO: Add the 'meta' tag for character encoding (UTF-8). -->
+    <meta charset="UTF-8" />
+
+    <!-- TODO: Add the responsive 'viewport' meta tag. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- TODO: Add a 'title' for the page, e.g., "Admin Portal". -->
+    <title>Admin Portal</title>
+
+    <!-- TODO: Link to a CSS file or a CSS framework. -->
+    <link rel="stylesheet" href="../common/styles.css" />
+
+    <!-- TODO: Add a <script> tag that loads 'manage_users.js' with the 'defer' attribute.
+         Example: <script src="manage_users.js" defer></script> -->
     <script src="manage_users.js" defer></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f5f7fa;
-            padding: 2rem;
-        }
-        
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-        /* Header */
-        
-        header {
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            color: white;
-            padding: 1.5rem 2rem;
-            border-radius: 10px;
-            margin-bottom: 2rem;
-        }
-        
-        header h1 {
-            font-size: 1.8rem;
-        }
-        /* Main content */
-        
-        main {
-            display: flex;
-            flex-direction: column;
-            gap: 2rem;
-        }
-        /* Sections */
-        
-        section {
-            background: white;
-            border-radius: 10px;
-            padding: 1.5rem;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        }
-        
-        section h2 {
-            color: #2a5298;
-            margin-bottom: 1rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 2px solid #e0e0e0;
-        }
-        /* Forms */
-        
-        .form-group {
-            margin-bottom: 1rem;
-        }
-        
-        label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-            color: #333;
-        }
-        
-        input,
-        select {
-            width: 100%;
-            max-width: 400px;
-            padding: 0.6rem;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 0.9rem;
-        }
-        
-        button {
-            padding: 0.6rem 1.2rem;
-            background: #2a5298;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 0.9rem;
-        }
-        
-        button:hover {
-            background: #1e3c72;
-        }
-        /* Details */
-        
-        details {
-            margin-top: 1rem;
-            padding: 1rem;
-            background: #f8f9fa;
-            border-radius: 8px;
-        }
-        
-        summary {
-            cursor: pointer;
-            font-weight: bold;
-            color: #2a5298;
-            margin-bottom: 1rem;
-        }
-        /* Search */
-        
-        .search-box {
-            margin-bottom: 1rem;
-        }
-        
-        .search-box input {
-            max-width: 300px;
-        }
-        /* Table */
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 1rem;
-        }
-        
-        th,
-        td {
-            padding: 0.75rem;
-            text-align: left;
-            border-bottom: 1px solid #e0e0e0;
-        }
-        
-        th {
-            background: #2a5298;
-            color: white;
-            font-weight: 600;
-        }
-        
-        tr:hover {
-            background: #f8f9fa;
-        }
-        
-        .btn-edit {
-            background: #ffc107;
-            color: #333;
-            margin-right: 0.5rem;
-        }
-        
-        .btn-delete {
-            background: #dc3545;
-            color: white;
-        }
-        
-        .badge {
-            padding: 0.25rem 0.5rem;
-            border-radius: 15px;
-            font-size: 0.75rem;
-            font-weight: bold;
-        }
-        
-        .badge-admin {
-            background: #2a5298;
-            color: white;
-        }
-        
-        .badge-student {
-            background: #28a745;
-            color: white;
-        }
-        
-        .message {
-            padding: 0.75rem;
-            border-radius: 5px;
-            margin-bottom: 1rem;
-            display: none;
-        }
-        
-        .message.success {
-            background: #d4edda;
-            color: #155724;
-            display: block;
-        }
-        
-        .message.error {
-            background: #f8d7da;
-            color: #721c24;
-            display: block;
-        }
-    </style>
+
 </head>
-
 <body>
-    <div class="container">
-        <!-- Header with H1 -->
-        <header>
-            <h1>User Management Dashboard</h1>
-        </header>
 
-        <main>
-            <!-- Section 1: Change Password -->
+    <!-- TODO: Create a 'header' element for the top of the page. -->
+        <!-- TODO: Inside the header, add a main heading (e.g., 'h1') with the text "Admin Portal". -->
+    <!-- End of the header. -->
+    <header>
+        <h1>Admin Portal</h1>
+    </header>
+
+    <!-- TODO: Create a 'main' element to hold the primary content of the portal. -->
+    <main>
+
+        <!-- Section 1: Password Management -->
+        <!-- TODO: Create a 'section' for the password management functionality. -->
+            <!-- TODO: Add a sub-heading (e.g., 'h2') with the text "Change Your Password". -->
             <section>
-                <h2>Change Your Password</h2>
+            <h2>Change Your Password</h2>
 
-                <!-- Password Form -->
-                <form id="password-form">
-                    <fieldset>
-                        <legend>Password Change</legend>
+            <!-- TODO: Create a 'form' for changing the password.
+                 - action="#"
+                 - id="password-form" -->
+                <!-- TODO: Use a 'fieldset' to group the password-related fields. -->
+                    <!-- TODO: Add a 'legend' for the fieldset, e.g., "Password Update". -->
+            <form id="password-form" action="#">
+                <fieldset>
+                    <legend>Password Update</legend>
+                    <!-- TODO: Add a 'label' for the current password input. 'for' should be "current-password". -->
+                    <!-- TODO: Add an 'input' for the current password.
+                         - type="password"
+                         - id="current-password"
+                         - required -->
+                    <label for="current-password">Current Password</label>
+                    <input type="password" id="current-password" required />
 
-                        <div class="form-group">
-                            <label for="current-password">Current Password</label>
-                            <input type="password" id="current-password" required>
-                        </div>
+                    <!-- TODO: Add a 'label' for the new password input. 'for' should be "new-password". -->
+                    <!-- TODO: Add an 'input' for the new password.
+                         - type="password"
+                         - id="new-password"
+                         - minlength="8"
+                         - required -->
+                    <label for="new-password">New Password</label>
+                    <input type="password" id="new-password" minlength="8" required />
 
-                        <div class="form-group">
-                            <label for="new-password">New Password</label>
-                            <input type="password" id="new-password" required minlength="8">
-                        </div>
+                    <!-- TODO: Add a 'label' for the confirm password input. 'for' should be "confirm-password". -->
+                    <!-- TODO: Add an 'input' to confirm the new password.
+                         - type="password"
+                         - id="confirm-password"
+                         - required -->
+                    <label for="confirm-password">Confirm New Password</label>
+                    <input type="password" id="confirm-password" required />
+                    
+                    <!-- TODO: Add a 'button' to submit the form.
+                         - type="submit"
+                         - id="change"
+                         - Text: "Update Password" -->
+                    <button type="submit" id="change">Update Password</button>
 
-                        <div class="form-group">
-                            <label for="confirm-password">Confirm Password</label>
-                            <input type="password" id="confirm-password" required>
-                        </div>
+                <!-- End of the fieldset. -->
+                </fieldset>
+            <!-- End of the password form. -->
+            </form>
+        <!-- End of the password management section. -->
+        </section>
 
-                        <button type="submit" id="change">Change Password</button>
+
+        <!-- Section 2: User Management -->
+        <!-- TODO: Create another 'section' for the user management functionality. -->
+            <!-- TODO: Add a sub-heading (e.g., 'h2') with the text "Manage Users". -->
+        <section>
+            <h2>Manage Users</h2>
+
+            <!-- Subsection 2.1: Add New User Form -->
+            <!-- TODO: Create a 'details' element so the "Add User" form can be collapsed. -->
+                <!-- TODO: Add a 'summary' element inside 'details' with the text "Add New User". -->
+            <details>
+                <summary>Add New User</summary>
+            
+                <!-- TODO: Create a 'form' for adding a new user.
+                     - action="#"
+                     - id="add-user-form" -->
+                    <!-- TODO: Use a 'fieldset' to group the new user fields. -->
+                        <!-- TODO: Add a 'legend' for the fieldset, e.g., "New User Information". -->
+            <form id="add-user-form" action="#">
+                <fieldset>
+                    <legend>Create User</legend>
+                
+                        <!-- TODO: Add a 'label' and 'input' for the user's full name.
+                             - label 'for': "user-name"
+                             - input 'id': "user-name"
+                             - input 'type': "text"
+                             - input: required -->
+                        <label for="user-name">Name</label>
+                        <input type="text" id="user-name" required />
+
+                        <!-- TODO: Add a 'label' and 'input' for the user's email.
+                             - label 'for': "user-email"
+                             - input 'id': "user-email"
+                             - input 'type': "email"
+                             - input: required -->
+                        <label for="user-email">Email</label>
+                        <input type="email" id="user-email" required />
+
+                        <!-- TODO: Add a 'label' and 'input' for the default password.
+                             - label 'for': "default-password"
+                             - input 'id': "default-password"
+                             - input 'type': "password"
+                             - input: required
+                             - minlength="8" -->
+                        <label for="default-password">Default Password</label>
+                        <input type="password" id="default-password" required minlength="8" />
+
+                        <!-- TODO: Add a 'label' and 'select' for the admin status.
+                             - label 'for': "is-admin"
+                             - select 'id': "is-admin"
+                             - Add two 'option' elements:
+                               - value="0" text "Student"
+                               - value="1" text "Admin" -->
+                        <label for="is-admin">Role</label>
+                        <select id="is-admin">
+                            <option value="0">Student</option>
+                            <option value="1">Admin</option>
+                        </select>
+
+                        <!-- TODO: Add a 'button' to submit the form.
+                             - type="submit"
+                             - id="add"
+                             - Text: "Add User" -->
+                        <button type="submit" id="add">Add User</button>
+
+                    <!-- End of the fieldset. -->
                     </fieldset>
+                <!-- End of the add user form. -->
                 </form>
-            </section>
+            <!-- End of the 'details' element. -->
+            </details>
 
-            <!-- Section 2: User Management -->
-            <section>
-                <h2>User Management</h2>
 
-                <!-- Add User Form inside Details -->
-                <details>
-                    <summary>Add New User</summary>
+            <!-- Subsection 2.2: User List -->
+            <!-- TODO: Add a sub-heading (e.g., 'h3') for the list of users, e.g., "Registered Users". -->
+            <h3>Registered Users</h3>
 
-                    <form id="add-user-form">
-                        <fieldset>
-                            <legend>New User Details</legend>
+            <!-- TODO: Add a search input field.
+                 - type="text"
+                 - id="search-input"
+                 - placeholder e.g. "Search by name or email..." -->
+            <input
+                type="text"
+                id="search-input"
+                placeholder="Search by name or email..."
+            />
 
-                            <div class="form-group">
-                                <label for="user-name">Full Name</label>
-                                <input type="text" id="user-name" required>
-                            </div>
+            <!-- TODO: Create a 'table' to display the list of users.
+                 - id="user-table" -->
+                <!-- TODO: Create a 'thead' for the table headers. -->
+                    <!-- TODO: Create a 'tr' (table row) inside the 'thead'. -->
+                        <!-- TODO: Create 'th' (table header) cells for:
+                             "Name", "Email", "Admin", "Actions"
+                             Each 'th' should be clickable for sorting. -->
+                    <!-- End of the row. -->
+                <!-- End of 'thead'. -->
+            
+            <table id="user-table">
+                <thead>
+                    <tr>
+                        <th data-sort="name">Name</th>
+                        <th data-sort="email">Email</th>
+                        <th data-sort="is_admin">Admin</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+            
+                <!-- TODO: Create a 'tbody' for the table body.
+                     - id="user-table-body"
+                     The rows will be populated dynamically by manage_users.js.
+                     Do NOT add any hardcoded rows here. -->
+            <!-- End of the table. -->
+                <tbody id="user-table-body"></tbody>
+            </table>
 
-                            <div class="form-group">
-                                <label for="user-email">Email Address</label>
-                                <input type="email" id="user-email" required>
-                            </div>
+        <!-- End of the user management section. -->
+        </section>
 
-                            <div class="form-group">
-                                <label for="default-password">Default Password</label>
-                                <input type="password" id="default-password" required minlength="8">
-                            </div>
+    <!-- End of the main content area. -->
+    </main>
 
-                            <div class="form-group">
-                                <label for="is-admin">User Role</label>
-                                <select id="is-admin">
-                                    <option value="0">Student</option>
-                                    <option value="1">Administrator</option>
-                                </select>
-                            </div>
-
-                            <button type="submit" id="add">Add User</button>
-                        </fieldset>
-                    </form>
-                </details>
-
-                <!-- Search Box -->
-                <div class="search-box">
-                    <input type="text" id="search-input" placeholder="Search users by name or email...">
-                </div>
-
-                <!-- Users Table -->
-                <table id="user-table">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Role</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="user-table-body">
-                        <!-- Users will be loaded here dynamically by JavaScript -->
-                    </tbody>
-                </table>
-            </section>
-        </main>
-
-        <div id="message-container" class="message"></div>
-    </div>
 </body>
-
 </html>
