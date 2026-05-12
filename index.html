@@ -1,1 +1,81 @@
 <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ITCS333 Course Website</title>
+    <link rel="stylesheet" href="src/common/styles.css">
+</head>
+<body>
+
+    <header class="site-header">
+        <nav class="navbar">
+            <h1 class="logo">ITCS333 Course Website</h1>
+
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="src/auth/login.html">Login</a></li>
+                <li><a href="src/resources/list.html">Course Resources</a></li>
+                <li><a href="src/resources/admin.html">Manage Resources</a></li>
+                <li><a href="src/admin/manage_users.html">Manage Users</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+
+        <section class="hero">
+            <div class="hero-content">
+                <h2>Welcome to ITCS333 Internet Software Development</h2>
+                <p>
+                    This course website helps students access course resources,
+                    manage learning materials, and participate in course activities.
+                </p>
+
+                <div class="hero-buttons">
+                    <a class="btn primary-btn" href="src/auth/login.html">Login</a>
+                    <a class="btn secondary-btn" href="src/resources/list.html">View Resources</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="cards-section">
+            <h2>Website Sections</h2>
+
+            <div class="cards">
+
+                <article class="card">
+                    <h3>Task 1: Home & Authentication</h3>
+                    <p>
+                        Access the home page, login system, and admin user management.
+                    </p>
+                    <a href="src/auth/login.html">Go to Login</a>
+                </article>
+
+                <article class="card">
+                    <h3>Task 2: Course Resources</h3>
+                    <p>
+                        Browse course materials, view resource details, and join discussions.
+                    </p>
+                    <a href="src/resources/list.html">View Resources</a>
+                </article>
+
+                <article class="card">
+                    <h3>Admin Area</h3>
+                    <p>
+                        Admin users can manage resources and users from the dashboard pages.
+                    </p>
+                    <a href="src/resources/admin.html">Manage Resources</a>
+                </article>
+
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="site-footer">
+        <p>&copy; 2026 ITCS333 Internet Software Development</p>
+    </footer>
+
+</body>
+</html>
